@@ -35,7 +35,7 @@ Please provide answers to these questions using markdown notation and place them
 
 
 3. Please provide a link to the repository you are using for this class.
-https://github.com/fc426/cs283
+   <br> https://github.com/fc426/cs283
 4. Briefly describe what you want to get out of this class.
    <br> I want to work on my C skills as well as get comfortable with git. 
 5. Briefly describe any concerns you might be having with being successful in this class (if any).
