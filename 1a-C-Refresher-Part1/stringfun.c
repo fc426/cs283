@@ -41,12 +41,34 @@ void usage(char *exename){
 //      so just 'return wc;' 
 int count_words(char *str){
     // Suggested local variables
-    int len;
-    int wc;
-    bool word_start;
+    int len = strlen(str);
+    int wc = 0;
+    bool word_start = false;
 
-    // Please implement
-    return 0;
+
+    for (int i = 0; i < len; i++) { // Loop over the string
+        char current_char = str[i]; // Get the current character
+
+        if (!word_start) {
+        	if (current_char == SPACE_CHAR) {
+        		continue;
+        	} else {
+        		wc++;
+        		word_start = true;
+        	}
+        } else {
+        	if (current_char == SPACE_CHAR) {
+        		word_start = false;
+        	} 
+        }
+    }
+
+        	
+
+
+        
+
+    return wc;
 }
 
 //reverse_string() algorithm
@@ -66,11 +88,17 @@ int count_words(char *str){
 //  3. When the loop above terminates, the string should be reversed in place
 void  reverse_string(char *str){
     // Suggested local variables
-    int end_idx;        //should be length of string - 1
-    int start_idx;
+	int end_idx = strlen(str) - 1;        //should be length of string - 1
+    int start_idx = 0;
     char tmp_char;
 
-    // Please implement
+    while (end_idx > start_idx) {
+    	tmp_char = str[start_idx];
+    	str[start_idx] = str[end_idx];
+    	str[end_idx] = tmp_char;
+    	start_idx++;
+    	end_idx--;
+    }
 
     return;
 }
@@ -112,11 +140,49 @@ void  reverse_string(char *str){
 // 4. fun (3)
 void  word_print(char *str){
     //suggested local variables
-    int len;            //length of string - aka strlen(str);
-    int last_char_idx;  //index of last char - strlen(str)-1;
+    int len = strlen(str);            //length of string - aka strlen(str);
+    int last_char_idx = len - 1;  //index of last char - strlen(str)-1;
     int wc = 0;         //counts words
     int wlen = 0;       //length of current word
     bool word_start = false;    //am I at the start of a new word
+
+    for (int i = 0; i < len; i++) { // Loop over the string
+        char current_char = str[i]; // Get the current character
+
+        if (!word_start) {
+            if (current_char == SPACE_CHAR) {
+            	printf(" (%d)\n", wlen);
+            	word_start = false;
+            	wlen = 0;
+                continue;
+            } else {
+                wc++;
+                word_start = true;
+                wlen = 0;
+                printf("%d. ", wc);
+
+            }
+        } else {
+            if (current_char == SPACE_CHAR) {
+                printf(" (%d)\n", wlen);
+                wlen = 0;
+                word_start = false;
+
+            } else {
+            	printf("%c",current_char);
+            	wlen++;
+            }
+
+            	
+
+        }
+    }
+
+
+
+
+
+
 
     // Please implement
 }
@@ -165,11 +231,13 @@ int main(int argc, char *argv[]){
 
             //TODO: #2. Call count_words, return of the result
             //          should go into the wc variable
+            wc = count_words(input_string);
             printf("Word Count: %d\n", wc);
             break;
         case 'r':
             //TODO: #3. Call reverse string using input_string
             //          input string should be reversed
+        	reverse_string(input_string);
             printf("Reversed string: %s\n", input_string);
 
             //TODO:  #4.  The algorithm provided in the directions 
@@ -183,6 +251,7 @@ int main(int argc, char *argv[]){
 
             //TODO: #5. Call word_print, output should be
             //          printed by that function
+            word_print(input_string);
             break;
 
         //TODO: #6. What is the purpose of the default option here?
