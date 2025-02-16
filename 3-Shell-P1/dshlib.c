@@ -5,95 +5,63 @@
 
 #include "dshlib.h"
 
-/*
- *  build_cmd_list
- *    cmd_line:     the command line from the user
- *    clist *:      pointer to clist structure to be populated
- *
- *  This function builds the command_list_t structure passed by the caller
- *  It does this by first splitting the cmd_line into commands by spltting
- *  the string based on any pipe characters '|'.  It then traverses each
- *  command.  For each command (a substring of cmd_line), it then parses
- *  that command by taking the first token as the executable name, and
- *  then the remaining tokens as the arguments.
- *
- *  NOTE your implementation should be able to handle properly removing
- *  leading and trailing spaces!
- *
- *  errors returned:
- *
- *    OK:                      No Error
- *    ERR_TOO_MANY_COMMANDS:   There is a limit of CMD_MAX (see dshlib.h)
- *                             commands.
- *    ERR_CMD_OR_ARGS_TOO_BIG: One of the commands provided by the user
- *                             was larger than allowed, either the
- *                             executable name, or the arg string.
- *
- *  Standard Library Functions You Might Want To Consider Using
- *      memset(), strcmp(), strcpy(), strtok(), strlen(), strchr()
- */
 int build_cmd_list(char *cmd_line, command_list_t *clist)
 {
-	if (cmd_line == NULL) {
-        return ERR_CMD_OR_ARGS_TOO_BIG;
+    if (cmd_line == NULL || strspn(cmd_line, " ") == strlen(cmd_line)) {
+        return WARN_NO_CMDS;
     }
 
-    char *cmd_copy = strdup(cmd_line);
-    if (cmd_copy == NULL) {
-        return ERR_CMD_OR_ARGS_TOO_BIG;
-    }
+    char *cmd_section;
+    char *exe_name;
+    char *cmd_args;
+    int bytes_processed;
+    int cmd_counter;
+    int cmd_length;
 
-    char *trim_cmd = cmd_copy;
+    cmd_counter = 0;
+    bytes_processed = 0;
+    cmd_length = strlen(cmd_line);
 
-    while (*trim_cmd == ' ') {
-        trim_cmd++;
-    }
-
-    size_t cmd_len = strlen(trim_cmd);
-    while (cmd_len > 0 && trim_cmd[cmd_len - 1] == ' ') {
-        trim_cmd[--cmd_len] = '\0';
-    }
-
-    int cmd_count = 0;
-    char *outer_ctx, *inner_ctx; 
-    char *cmd_token = strtok_r(trim_cmd, PIPE_STRING, &outer_ctx); 
-
-    while (cmd_token != NULL && cmd_count < CMD_MAX) { 
-        memset(&clist->commands[cmd_count], 0, sizeof(command_t));
-
-        char *cmd_exec = strtok_r(cmd_token, " ", &inner_ctx);
-        if (cmd_exec != NULL) {
-            if (strlen(cmd_exec) >= EXE_MAX) {
-                free(cmd_copy);
-                return ERR_CMD_OR_ARGS_TOO_BIG;
-            }
-            strcpy(clist->commands[cmd_count].exe, cmd_exec);
-
-            char *arg_token = strtok_r(NULL, " ", &inner_ctx); 
-            while (arg_token != NULL) {
-                if (strlen(clist->commands[cmd_count].args) + strlen(arg_token) + 1 >= ARG_MAX) {
-                    free(cmd_copy);
-                    return ERR_CMD_OR_ARGS_TOO_BIG;
-                }
-
-                if (strlen(clist->commands[cmd_count].args) > 0) {
-                    strcat(clist->commands[cmd_count].args, " ");
-                }
-                strcat(clist->commands[cmd_count].args, arg_token);
-                arg_token = strtok_r(NULL, " ", &inner_ctx);
-            }
+    cmd_section = strtok(cmd_line, PIPE_STRING);
+    while (cmd_section != NULL) {
+        if (cmd_counter >= CMD_MAX) {
+            return ERR_TOO_MANY_COMMANDS;
         }
 
-        cmd_count++; 
-        cmd_token = strtok_r(NULL, PIPE_STRING, &outer_ctx);
+        for (int i = strlen(cmd_section) - 1; cmd_section[i] == SPACE_CHAR; i--) {
+            cmd_section[i + 1] = SPACE_CHAR;
+            cmd_section[i] = '\0';
+        }
+
+        bytes_processed += strlen(cmd_section) + 1;
+
+        exe_name = strtok(cmd_section, " ");
+        if (strlen(exe_name) > EXE_MAX) {
+            return ERR_CMD_OR_ARGS_TOO_BIG;
+        }
+
+        strcpy(clist->commands[cmd_counter].exe, exe_name);
+
+        cmd_args = strtok(NULL, "");
+        if (cmd_args != NULL) {
+            if (strlen(cmd_args) > ARG_MAX) {
+                return ERR_CMD_OR_ARGS_TOO_BIG;
+            }
+            strcpy(clist->commands[cmd_counter].args, cmd_args);
+        } else {
+            strcpy(clist->commands[cmd_counter].args, "\0");
+        }
+
+        cmd_counter++;
+
+        if (bytes_processed < cmd_length) {
+            cmd_section = strtok(cmd_line + bytes_processed, PIPE_STRING);
+        } else {
+            cmd_section = NULL;
+        }
     }
 
-    if (cmd_token != NULL) {
-        free(cmd_copy);
-        return ERR_TOO_MANY_COMMANDS;
-    }
-
-    clist->num = cmd_count;
-    free(cmd_copy);
+    clist->num = cmd_counter;
     return OK;
 }
+
